@@ -3,135 +3,125 @@
 # Criando Menu Inicial em Raylib (C)
 
 ```c
-// Importa a biblioteca Raylib
-#include "raylib.h"
+#include <stdio.h>
+#include "raylib/include/raylib.h"
 
-// Cria estados possíveis do jogo
-typedef enum GameState
-{
+// Função Botao corrigida para usar cores nativas sem erro
+void Botao(Rectangle area, const char* texto, Color cor){
+    DrawRectangleRec(area, cor); // Constrói o fundo do botão
+    DrawRectangleLinesEx(area, 4, BLACK); // Borda preta simples e funcional
+    DrawText(texto, area.x + 25, area.y + 20, 28, WHITE); // Texto branco para contraste
+};
+
+typedef enum GameState{
     MENU,
-    GAME,
-    INSTRUCTIONS,
+    PAUSA,
+    INSTRUCT,
+    JOGO,
     GAME_OVER
 } GameState;
 
 int main(void)
 {
-    // Cria janela
-    InitWindow(800, 450, "Menu em Raylib");
+    InitWindow(1000, 1000, "Apenas um Retangulo");
 
-    // Define FPS
-    SetTargetFPS(60);
+    SetTargetFPS(60); 
 
-    // Estado inicial do jogo
-    GameState estadoAtual = MENU;
+    GameState estado = MENU; 
+    Vector2 playerPos = {500,500};
+    float vel = 10.0f;
 
-    // Posição do jogador
-    Vector2 jogador = { 400, 225 };
+    // Definição das áreas dos botões do menu
+    Rectangle botaoJogar = { 350, 420, 300, 70 };
+    Rectangle botaoInstrucoes = { 350, 520, 300, 70 };
 
-    // Velocidade do jogador
-    float velocidade = 4.0f;
-
-    // Loop principal
     while (!WindowShouldClose())
     {
-        // =========================
-        // UPDATE
-        // =========================
-
-        if (estadoAtual == MENU)
-        {
-            if (IsKeyPressed(KEY_ENTER))
-            {
-                estadoAtual = GAME;
-            }
-
-            if (IsKeyPressed(KEY_I))
-            {
-                estadoAtual = INSTRUCTIONS;
-            }
-
-            if (IsKeyPressed(KEY_ESCAPE))
-            {
-                break;
-            }
-        }
-        else if (estadoAtual == INSTRUCTIONS)
-        {
-            if (IsKeyPressed(KEY_BACKSPACE))
-            {
-                estadoAtual = MENU;
-            }
-        }
-        else if (estadoAtual == GAME)
-        {
-            if (IsKeyDown(KEY_RIGHT)) jogador.x += velocidade;
-            if (IsKeyDown(KEY_LEFT))  jogador.x -= velocidade;
-            if (IsKeyDown(KEY_UP))    jogador.y -= velocidade;
-            if (IsKeyDown(KEY_DOWN))  jogador.y += velocidade;
-
-            if (IsKeyPressed(KEY_G))
-            {
-                estadoAtual = GAME_OVER;
-            }
-        }
-        else if (estadoAtual == GAME_OVER)
-        {
-            if (IsKeyPressed(KEY_R))
-            {
-                jogador = (Vector2){ 400, 225 };
-                estadoAtual = GAME;
-            }
-
-            if (IsKeyPressed(KEY_M))
-            {
-                jogador = (Vector2){ 400, 225 };
-                estadoAtual = MENU;
-            }
-        }
-
-        // =========================
-        // DRAW
-        // =========================
-
         BeginDrawing();
+            // Fundo cinza escuro nativo - elegante e seguro contra erros
+            ClearBackground(DARKGRAY);
+            
+            if(estado == MENU){
+                // Painel central usando MAROON (um tom de vinho/vermelho escuro)
+                DrawRectangle(200, 200, 600, 600, MAROON);
+                DrawRectangleLinesEx((Rectangle){200, 200, 600, 600}, 4, WHITE);
+                
+                // Título alternando entre duas cores nativas seguras (GOLD e ORANGE)
+                Color corTitulo = ((int)(GetTime() * 2) % 2 == 0) ? GOLD : ORANGE;
+                DrawText("RETÂNGULO ADVENTURE", 240, 260, 45, corTitulo);
+                
+                // Renderizando os botões com cores padrões da Raylib
+                Botao(botaoJogar, "1. JOGAR", LIME);      // Verde limão padrão
+                Botao(botaoInstrucoes, "2. REGRAS", BLUE); // Azul padrão
+                
+                DrawText("Dica: Use o mouse para clicar ou o teclado!", 270, 720, 20, LIGHTGRAY);
 
-        ClearBackground(RAYWHITE);
+                // Cliques e Teclado
+                if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), botaoJogar)) || IsKeyPressed(KEY_ENTER)){
+                    estado = JOGO;
+                }
+                else if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), botaoInstrucoes)) || IsKeyPressed(KEY_I)){
+                    estado = INSTRUCT;
+                }
+            }
+            else if(estado == PAUSA){
+                DrawRectangle(200, 200, 600, 600, MAROON);
+                DrawRectangleLinesEx((Rectangle){200, 200, 600, 600}, 4, ORANGE);
+                
+                DrawText("PAUSA", 435, 260, 50, ORANGE);
+                DrawText("PRESSIONE ENTER PARA VOLTAR", 310, 500, 24, WHITE);
+                if(IsKeyPressed(KEY_ENTER)){
+                    estado = JOGO;
+                }
+            }
+            else if(estado == JOGO){
+                if(IsKeyPressed(KEY_SPACE)){
+                    estado = PAUSA;
+                }
+                if(IsKeyPressed(KEY_M)){
+                    estado = MENU;
+                }
 
-        if (estadoAtual == MENU)
-        {
-            DrawText("MEU JOGO EM RAYLIB", 230, 90, 32, DARKBLUE);
-            DrawText("Pressione ENTER para jogar", 250, 170, 22, BLACK);
-            DrawText("Pressione I para instrucoes", 260, 210, 22, DARKGRAY);
-            DrawText("Pressione ESC para sair", 275, 250, 22, MAROON);
-        }
-        else if (estadoAtual == INSTRUCTIONS)
-        {
-            DrawText("INSTRUCOES", 300, 80, 32, DARKBLUE);
-            DrawText("Use as setas para mover o jogador.", 180, 160, 22, BLACK);
-            DrawText("Pressione G para simular GAME OVER.", 180, 200, 22, BLACK);
-            DrawText("Pressione BACKSPACE para voltar.", 180, 260, 22, MAROON);
-        }
-        else if (estadoAtual == GAME)
-        {
-            DrawText("JOGO RODANDO", 20, 20, 24, DARKBLUE);
-            DrawText("Use as setas para mover", 20, 55, 18, DARKGRAY);
-            DrawText("Pressione G para Game Over", 20, 80, 18, MAROON);
-
-            DrawRectangleV(jogador, (Vector2){ 40, 40 }, BLUE);
-        }
-        else if (estadoAtual == GAME_OVER)
-        {
-            DrawText("GAME OVER", 270, 120, 48, RED);
-            DrawText("Pressione R para reiniciar", 260, 220, 22, BLACK);
-            DrawText("Pressione M para voltar ao menu", 235, 260, 22, DARKGRAY);
-        }
+                // O jogador agora é um quadrado SKYBLUE (Azul Claro) com borda branca
+                DrawRectangleV(playerPos, (Vector2){ 40, 40 }, SKYBLUE);
+                DrawRectangleLinesEx((Rectangle){playerPos.x, playerPos.y, 40, 40}, 2, WHITE);
+                
+                if (IsKeyDown(KEY_RIGHT)) playerPos.x += vel;
+                if (IsKeyDown(KEY_LEFT))  playerPos.x -= vel;
+                if (IsKeyDown(KEY_UP))    playerPos.y -= vel;
+                if (IsKeyDown(KEY_DOWN))  playerPos.y += vel;
+            }
+            else if(estado == INSTRUCT){
+                DrawRectangle(200, 200, 600, 600, MAROON);
+                DrawRectangleLinesEx((Rectangle){200, 200, 600, 600}, 4, SKYBLUE);
+                
+                DrawText("INSTRUCOES", 360, 260, 50, SKYBLUE);
+                DrawText("Movimente o personagem com as teclas: SETAS", 245, 480, 22, WHITE);
+                DrawText("Pressione M para voltar ao MENU", 320, 540, 22, LIGHTGRAY);
+                
+                if(IsKeyPressed(KEY_M)){
+                    estado = MENU;
+                }
+                if(IsKeyPressed(KEY_ENTER)){
+                    estado = JOGO;
+                }
+            }
+            else if(estado == GAME_OVER){
+                DrawRectangle(200, 200, 600, 600, MAROON);
+                DrawRectangleLinesEx((Rectangle){200, 200, 600, 600}, 4, RED);
+                
+                DrawText("GAME OVER", 370, 260, 50, RED);
+                DrawText("CLIQUE G PARA REVIVER", 360, 500, 24, WHITE);
+                if(IsKeyPressed(KEY_G)){
+                    playerPos = (Vector2){500,500};
+                    estado = JOGO;
+                }
+            }
 
         EndDrawing();
     }
 
     CloseWindow();
-
     return 0;
 }
 ```
